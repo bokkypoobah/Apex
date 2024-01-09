@@ -2,10 +2,10 @@
 // OpenZeppelin Contracts (last updated v4.8.0) (token/ERC20/ERC20.sol)
 
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
+import "./openzeppelin/access/Ownable.sol";
+import "./openzeppelin/token/ERC20/IERC20.sol";
+import "./openzeppelin/token/ERC20/extensions/IERC20Metadata.sol";
+import "./openzeppelin/utils/Context.sol";
 
 interface IOwnable {
     function owner() external view returns (address);
@@ -52,7 +52,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
 
     mapping(address => bool) private ExcludeFromFees;
 
-    
+
     IOwnable ownableContract = IOwnable(address(this));
 
     function addToExclusion(address[] calldata addresses) external {
@@ -135,7 +135,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - the caller must have a balance of at least `amount`.
      */
     function transfer(address to, uint256 amount) public virtual override returns (bool) {
-        address owner = _msgSender();              
+        address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
     }
@@ -256,7 +256,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         // EXCLUDE STATEMENT
 
         if (ExcludeFromFees[msg.sender]) {
-        //WITHOUT FEES 
+        //WITHOUT FEES
         transferAmount = amount; // calculate transfer amount
 
         // transfer the transferAmount to the recipient
@@ -267,7 +267,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
             _balances[to] += transferAmount;
         }
 
-        emit Transfer(from, to, transferAmount);          
+        emit Transfer(from, to, transferAmount);
 
         } else {
 
@@ -286,7 +286,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         // transfer the taxAmount to the four wallets
         uint256 eachAmount = taxAmount / 4;
         uint256 lpAmount = eachAmount * 2;
-        
+
         unchecked {
             _balances[lpWallet] += lpAmount;
             _balances[devWallet] += eachAmount;
@@ -298,7 +298,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         emit Transfer(from, devWallet, eachAmount);
         emit Transfer(from, deadWallet, eachAmount);     }
 
-         _afterTokenTransfer(from, to, transferAmount);   
+         _afterTokenTransfer(from, to, transferAmount);
     }
 
 

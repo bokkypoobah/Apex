@@ -2,6 +2,11 @@
 
 pragma solidity ^0.8.17;
 
+import "./openzeppelin/access/Ownable.sol";
+import "./openzeppelin/security/ReentrancyGuard.sol";
+import "./openzeppelin/token/ERC20/IERC20.sol";
+import "./abdk-libraries-solidity/ABDKMath64x64.sol";
+
 interface IBattledog {
     struct Player {
         string name;
@@ -31,15 +36,15 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
     uint256 public multiplier = 10;
     uint256 public timeLock = 604800;
     uint256 private divisor = 1 ether;
-    address private guard; 
+    address private guard;
     address public battledogs;
-    bool public paused = false; 
+    bool public paused = false;
     uint256 public activatebonus = 5;
     uint256 public levelbonus = 4;
     uint256 public winsbonus = 3;
     uint256 public fightsbonus = 2;
     uint256 public historybonus = 1;
-        
+
 
     // Declare the ActiveMiners & Blacklist arrays
     uint256 public activeMinersLength;
@@ -63,7 +68,7 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
     }
 
     event RewardClaimedByMiner (address indexed user, uint256 amount);
-    
+
     constructor(
         address _GAMEToken,
         address _battledogs,
@@ -74,7 +79,7 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         guard = _newGuard;
     }
 
-    using ABDKMath64x64 for uint256;  
+    using ABDKMath64x64 for uint256;
 
     modifier onlyGuard() {
         require(msg.sender == guard, "Not authorized.");
@@ -84,23 +89,23 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
   function getMinerData() public {
       uint256 total = IBattledog(battledogs).balanceOf(msg.sender);
       IBattledog.Player[] memory players = IBattledog(battledogs).getPlayerOwners(msg.sender);
-      
+
       for (uint256 i = 0; i < total; i++) {
-          uint256 tokenId = players[i].id;  
+          uint256 tokenId = players[i].id;
           bool state =  IBattledog(battledogs).blacklisted(tokenId);
         // Require Miner is not on blacklist
         if (!state) {
         address owner = IBattledog(battledogs).ownerOf(tokenId);
-            // compare the _tokenId 
+            // compare the _tokenId
             if (owner == msg.sender) {
                 // Update the ActiveMiner array with the player's data
                 ActiveMiners[tokenId] = players[i];
-                }            
+                }
                 // Increment the activeMinersLength when necessary
                 if (!minerstate[tokenId]) {
                     activeMinersLength++;
                     minerstate[tokenId] = true;
-                }            
+                }
 
         }
       }
@@ -117,31 +122,31 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
 
       uint256 total = IBattledog(battledogs).balanceOf(msg.sender);
       IBattledog.Player[] memory players = IBattledog(battledogs).getPlayerOwners(msg.sender);
-      
+
       for (uint256 i = 0; i < total; i++) {
-          uint256 tokenId = players[i].id;  
+          uint256 tokenId = players[i].id;
           bool state =  IBattledog(battledogs).blacklisted(tokenId);
         // Require Miner is not on blacklist
         if (!state) {
         address owner = IBattledog(battledogs).ownerOf(tokenId);
-            // compare the _tokenId 
+            // compare the _tokenId
             if (owner == msg.sender) {
                 // Update the ActiveMiner array with the player's data
                 ActiveMiners[tokenId] = players[i];
-                }            
+                }
                 // Increment the activeMinersLength when necessary
                 if (!minerstate[tokenId]) {
                     activeMinersLength++;
                     minerstate[tokenId] = true;
-                }            
+                }
 
         }
       }
 
         for (uint256 a = 0; a < _nfts.length; a++) {
-            uint256 tokenId = _nfts[a]; // Current NFT id       
-            // Require Each Miner hasn't claimed within timelock   
-            uint256 unlock = MinerClaims[tokenId] + timeLock;  
+            uint256 tokenId = _nfts[a]; // Current NFT id
+            // Require Each Miner hasn't claimed within timelock
+            uint256 unlock = MinerClaims[tokenId] + timeLock;
             uint256 currentTime = block.timestamp;
             if (currentTime > unlock) {
                 // Check if the miner is activated
@@ -157,10 +162,10 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
                     uint256 rewards = (activate + level + fights + wins + history) * divisor;
 
                     // Check the contract for adequate withdrawal balance
-                    require(GAMEToken.balanceOf(address(this)) > rewards, "Not Enough Reserves");      
+                    require(GAMEToken.balanceOf(address(this)) > rewards, "Not Enough Reserves");
                     // Transfer the rewards amount to the miner
                     require(GAMEToken.transfer(msg.sender, rewards), "Failed Transfer");
-                    
+
                     // Register claim
                         // Read the miner data from the ActiveMiners mapping
                         IBattledog.Player memory activeMiner = ActiveMiners[tokenId];
@@ -182,10 +187,10 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
                     // Register claim timestamp
                     MinerClaims[tokenId] = currentTime; // Record the miner's claim timestamp
                     // TotalClaimedRewards
-                    totalClaimedRewards += rewards;       
+                    totalClaimedRewards += rewards;
                     // Emit event
                     emit RewardClaimedByMiner(msg.sender, rewards);
-                } 
+                }
             } else {
                 require(currentTime > unlock, 'Timelocked');
             }
@@ -238,5 +243,5 @@ contract ProofOfPlay is Ownable, ReentrancyGuard {
         require(paused, "Contract not paused.");
         paused = false;
         emit Unpause();
-    } 
-}                      
+    }
+}

@@ -4,27 +4,27 @@
 // https://twitter.com/0xSorcerers | https://github.com/Dark-Viper | https://t.me/Oxsorcerer | https://t.me/battousainakamoto | https://t.me/darcViper
 
 pragma solidity ^0.8.17;
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "abdk-libraries-solidity/ABDKMath64x64.sol";
+import "./openzeppelin/utils/math/SafeMath.sol";
+import "./abdk-libraries-solidity/ABDKMath64x64.sol";
 import "./ERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./openzeppelin/security/ReentrancyGuard.sol";
 
-contract GAME is ERC20, Ownable, ReentrancyGuard {        
-        constructor(string memory _name, string memory _symbol, address _newGuard, address _devWallet, address _lpWallet, address _deadWallet) 
+contract GAME is ERC20, Ownable, ReentrancyGuard {
+        constructor(string memory _name, string memory _symbol, address _newGuard, address _devWallet, address _lpWallet, address _deadWallet)
             ERC20(_name, _symbol)
         {
-        guard = _newGuard;       
+        guard = _newGuard;
         devWallet = _devWallet;
         lpWallet = _lpWallet;
         deadWallet = _deadWallet;
-        _mint(msg.sender, MAX_SUPPLY);  
+        _mint(msg.sender, MAX_SUPPLY);
 
         }
     using ABDKMath64x64 for uint256;
     using SafeMath for uint256;
 
     address public burnercontract;
-    
+
     bool public paused = false;
     address private guard;
     uint256 public MAX_SUPPLY = 5000000000 * 10 ** decimals();
@@ -41,14 +41,14 @@ contract GAME is ERC20, Ownable, ReentrancyGuard {
     }
 
     event burnEvent(uint256 indexed _amount);
-    function Burn(uint256 _amount) external onlyBurner {                
+    function Burn(uint256 _amount) external onlyBurner {
        require(!paused, "Paused Contract");
        _burn(msg.sender, _amount);
        TotalBurns += _amount;
        emit burnEvent(_amount);
     }
 
-    function Burner(uint256 _amount) external onlyOwner {                
+    function Burner(uint256 _amount) external onlyOwner {
         require(!paused, "Paused Contract");
        _burn(msg.sender, _amount);
        TotalBurns += _amount;

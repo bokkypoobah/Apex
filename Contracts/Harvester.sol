@@ -5,6 +5,10 @@
 
 pragma solidity ^0.8.17;
 
+import "./openzeppelin/access/Ownable.sol";
+import "./openzeppelin/security/ReentrancyGuard.sol";
+import "./openzeppelin/token/ERC20/IERC20.sol";
+
 contract Harvester is Ownable, ReentrancyGuard {
     IERC20 public GAMEToken;
     IERC20 public payToken;
@@ -19,9 +23,9 @@ contract Harvester is Ownable, ReentrancyGuard {
     uint256 public tax = 0;
     uint256 public TaxTotal = 0;
     uint256 private divisor = 100 ether;
-    address private guard; 
-    bool public paused = false;   
-    bool public replenisher = false;  
+    address private guard;
+    bool public paused = false;
+    bool public replenisher = false;
     uint256 public replenishTax = 0;
     uint256 public currentReplenish;
     uint256 public totalReplenish;
@@ -41,13 +45,13 @@ contract Harvester is Ownable, ReentrancyGuard {
         uint256 GAMESent;
         uint256 rewardsOwed;
     }
-    
+
     event RewardsUpdated(uint256 totalRewards);
     event RewardAddedByDev(uint256 amount);
     event RewardClaimedByUser(address indexed user, uint256 amount);
     event AddGAME(address indexed user, uint256 amount);
     event WithdrawGAME(address indexed user, uint256 amount);
-    
+
     constructor(
         address _GAMEToken,
         address _payToken,
@@ -66,12 +70,12 @@ contract Harvester is Ownable, ReentrancyGuard {
         _;
     }
 
-    modifier onlyAfterTimelock() {             
+    modifier onlyAfterTimelock() {
         require(entryMap[msg.sender] + timeLock < block.timestamp, "Timelocked.");
         _;
     }
 
-    modifier onlyClaimant() {             
+    modifier onlyClaimant() {
         require(UserClaims[msg.sender] + timeLock < block.timestamp, "Timelocked.");
         _;
     }
@@ -96,7 +100,7 @@ contract Harvester is Ownable, ReentrancyGuard {
         } else {
             updateAllClaims();
         }
-    
+
         claimData.eraAtBlock = block.timestamp;
         claimData.GAMESent += amount;
         TotalGAMESent += amount;
@@ -109,11 +113,11 @@ contract Harvester is Ownable, ReentrancyGuard {
     */
     function withdrawGAME() public nonReentrant onlyAfterTimelock {
         require(!paused, "Contract already paused.");
-        require(balances[msg.sender] > 0, "No GAME tokens to withdraw.");        
+        require(balances[msg.sender] > 0, "No GAME tokens to withdraw.");
         uint256 GAMEAmount = balances[msg.sender];
-        require(GAMEToken.transfer(msg.sender, GAMEAmount), "Failed Transfer");  
-        
-        updateAllClaims();     
+        require(GAMEToken.transfer(msg.sender, GAMEAmount), "Failed Transfer");
+
+        updateAllClaims();
          //Delete all allocations of GAME
         balances[msg.sender] = 0;
         TotalGAMESent -= GAMEAmount;
@@ -126,7 +130,7 @@ contract Harvester is Ownable, ReentrancyGuard {
             numberOfParticipants -= 1;
             entryMap[msg.sender] = 0; // reset the user's entry timestamp
         }
-        
+
         emit WithdrawGAME(msg.sender, GAMEAmount);
     }
 
@@ -157,7 +161,7 @@ contract Harvester is Ownable, ReentrancyGuard {
             Claim storage claimData = claimRewards[participant];
             uint256 currentTime = block.timestamp;
             uint256 period = block.timestamp - claimData.eraAtBlock;
-            
+
             if (blacklist[participant] == 1) {
                 claimData.rewardsOwed = 0;
             } else {
@@ -172,20 +176,20 @@ contract Harvester is Ownable, ReentrancyGuard {
         rewardPerStamp = (totalRewards * divisor) / (TotalGAMESent * Duration);
     }
 
-    function claim() public nonReentrant onlyClaimant {  
-        require(!paused, "Contract already paused.");         
-        require(blacklist[msg.sender] == 0, "Address is blacklisted.");        
-        updateAllClaims();          
+    function claim() public nonReentrant onlyClaimant {
+        require(!paused, "Contract already paused.");
+        require(blacklist[msg.sender] == 0, "Address is blacklisted.");
+        updateAllClaims();
         require(claimRewards[msg.sender].rewardsOwed > 0, "No rewards.");
         Claim storage claimData = claimRewards[msg.sender];
-        uint256 replenished = (claimData.rewardsOwed / 100) * replenishTax; 
+        uint256 replenished = (claimData.rewardsOwed / 100) * replenishTax;
         uint256 estimatedRewards = claimData.rewardsOwed - replenished;
 
         uint256 rewards =  estimatedRewards / divisor;
         uint256 replenish = replenished / divisor;
-        
-        require(payToken.transfer(msg.sender, rewards), "Transfer failed."); 
-        require(payToken.transfer(battledogs, replenish), "Transfer failed.");       
+
+        require(payToken.transfer(msg.sender, rewards), "Transfer failed.");
+        require(payToken.transfer(battledogs, replenish), "Transfer failed.");
         claimData.rewardsOwed = 0;
         // Update the total rewards claimed by the user
         Claimants[msg.sender] += rewards;
@@ -193,7 +197,7 @@ contract Harvester is Ownable, ReentrancyGuard {
         currentReplenish += replenish;
         totalReplenish += replenish;
         setRewards();
-        UserClaims[msg.sender] = block.timestamp; // record the user's claim timestamp       
+        UserClaims[msg.sender] = block.timestamp; // record the user's claim timestamp
         emit RewardClaimedByUser(msg.sender, rewards);
     }
 
@@ -211,7 +215,7 @@ contract Harvester is Ownable, ReentrancyGuard {
         setRewards();
     }
 
-    function setDuration(uint256 _seconds) external onlyOwner {        
+    function setDuration(uint256 _seconds) external onlyOwner {
         updateAllClaims();
         Duration = _seconds;
         updateRewardPerStamp();
@@ -284,4 +288,4 @@ contract Harvester is Ownable, ReentrancyGuard {
         replenisher = false;
         emit ReplenishOff();
     }
-}              
+}
