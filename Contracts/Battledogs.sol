@@ -18,12 +18,14 @@ interface Iburn {
 }
 
 contract battledog is ERC721Enumerable, Ownable, ReentrancyGuard {
-        constructor(string memory _name, string memory _symbol, address GAMEAddress, address _newGuard)
-            ERC721(_name, _symbol)
-        {
-            GAME = GAMEAddress;
-            guard = _newGuard;
-        }
+
+    constructor(string memory _name, string memory _symbol, address GAMEAddress, address _newGuard)
+        ERC721(_name, _symbol)
+    {
+        GAME = GAMEAddress;
+        guard = _newGuard;
+    }
+
     using Math for uint256;
     using ABDKMath64x64 for uint256;
     using SafeERC20 for IERC20;
@@ -297,11 +299,11 @@ contract battledog is ERC721Enumerable, Ownable, ReentrancyGuard {
         BattlesTotal++;
         // stealing Points
         uint256 stolenPoints;
-        if(players[attackerId].level > players[defenderId].level
-        && players[defenderId].attack >= 20) {
+        if (players[attackerId].level > players[defenderId].level
+            && players[defenderId].attack >= 20) {
             stolenPoints = 20;
         } else if (players[attackerId].attack >= (players[defenderId].defence + 300)
-        && players[defenderId].attack >= 20) {
+            && players[defenderId].attack >= 20) {
             stolenPoints = 20;
         } else {
             stolenPoints = 10;
@@ -364,11 +366,11 @@ contract battledog is ERC721Enumerable, Ownable, ReentrancyGuard {
         BattlesTotal++;
         // stealing Points
         uint256 stolenPoints;
-        if(players[attackerId].level > players[defenderId].level
-        && players[defenderId].defence >= 20) {
+        if (players[attackerId].level > players[defenderId].level
+            && players[defenderId].defence >= 20) {
             stolenPoints = 20;
         } else if (players[attackerId].defence >= (players[defenderId].attack + 300)
-        && players[defenderId].defence >= 20) {
+            && players[defenderId].defence >= 20) {
             stolenPoints = 20;
         } else {
             stolenPoints = 10;
@@ -497,7 +499,7 @@ contract battledog is ERC721Enumerable, Ownable, ReentrancyGuard {
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
-    return baseURI;
+        return baseURI;
     }
 
     function updateBaseURI(string memory _newLink) external onlyOwner() {
@@ -505,11 +507,11 @@ contract battledog is ERC721Enumerable, Ownable, ReentrancyGuard {
     }
 
     function tokenURI(uint256 _tokenId) public view override returns (string memory) {
-    require(_tokenId <= totalSupply(), "Not Found");
-    return
-      bytes(baseURI).length > 0
-        ? string(abi.encodePacked(baseURI, _tokenId.toString(), ".json"))
-        : "";
+        require(_tokenId <= totalSupply(), "Not Found");
+        return
+        bytes(baseURI).length > 0
+            ? string(abi.encodePacked(baseURI, _tokenId.toString(), ".json"))
+            : "";
     }
 
     event Pause();
@@ -532,8 +534,8 @@ contract battledog is ERC721Enumerable, Ownable, ReentrancyGuard {
         uint256 total = totalSupply();
         Player[] memory result = new Player[](total);
         for (uint256 i = 0; i < total; i++) {
-                result[counter] = players[i];
-                counter++;
+            result[counter] = players[i];
+            counter++;
         }
         return result;
     }
